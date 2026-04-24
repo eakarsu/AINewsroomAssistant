@@ -1,0 +1,55 @@
+const express = require('express');
+const db = require('../models/db');
+const auth = require('../middleware/auth');
+
+const router = express.Router();
+
+router.get('/', auth, async (req, res) => {
+  try {
+    const result = await db.query('SELECT * FROM trending_topics ORDER BY trend_score DESC');
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.get('/:id', auth, async (req, res) => {
+  try {
+    const result = await db.query('SELECT * FROM trending_topics WHERE id = $1', [req.params.id]);
+    if (!result.rows[0]) return res.status(404).json({ error: 'Not found' });
+    res.json(result.rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.post('/', auth, async (req, res) => {
+  try {
+    const { topic, category, trend_score, volume, sentiment, region, keywords, status } = req.body;
+    const result = await db.query(
+      `INSERT INTO trending_topics (topic, category, trend_score, volume, sentiment, region, keywords, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [topic, category, trend_score || 50, volume || 0, sentiment || 'neutral', region || 'Global', keywords, status || 'active']
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.put('/:id', auth, async (req, res) => {
+  try {
+    const { topic, category, trend_score, volume, sentiment, region, keywords, status } = req.body;
+    const result = await db.query(
+      `UPDATE trending_topics SET topic=$1, category=$2, trend_score=$3, volume=$4, sentiment=$5, region=$6, keywords=$7, status=$8, updated_at=NOW()
+       WHERE id=$9 RETURNING *`,
+      [topic, category, trend_score, volume, sentiment, region, keywords, status, req.params.id]
+    );
+    if (!result.rows[0]) return res.status(404).json({ error: 'Not found' });
+    res.json(result.rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const result = await db.query('DELETE FROM trending_topics WHERE id = $1 RETURNING *', [req.params.id]);
+    if (!result.rows[0]) return res.status(404).json({ error: 'Not found' });
+    res.json({ message: 'Deleted successfully' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+module.exports = router;

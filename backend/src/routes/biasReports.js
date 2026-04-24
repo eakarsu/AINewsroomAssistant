@@ -1,0 +1,65 @@
+const express = require('express');
+const db = require('../models/db');
+const auth = require('../middleware/auth');
+
+const router = express.Router();
+
+router.get('/', auth, async (req, res) => {
+  try {
+    const result = await db.query('SELECT * FROM bias_reports ORDER BY created_at DESC');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/:id', auth, async (req, res) => {
+  try {
+    const result = await db.query('SELECT * FROM bias_reports WHERE id = $1', [req.params.id]);
+    if (!result.rows[0]) return res.status(404).json({ error: 'Not found' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/', auth, async (req, res) => {
+  try {
+    const { article_title, article_content, bias_type, severity, ai_analysis, suggestions, status } = req.body;
+    const result = await db.query(
+      `INSERT INTO bias_reports (article_title, article_content, bias_type, severity, ai_analysis, suggestions, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [article_title, article_content, bias_type, severity || 'low', ai_analysis, suggestions, status || 'pending']
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/:id', auth, async (req, res) => {
+  try {
+    const { article_title, article_content, bias_type, severity, ai_analysis, suggestions, status } = req.body;
+    const result = await db.query(
+      `UPDATE bias_reports SET article_title=$1, article_content=$2, bias_type=$3, severity=$4, ai_analysis=$5, suggestions=$6, status=$7, updated_at=NOW()
+       WHERE id=$8 RETURNING *`,
+      [article_title, article_content, bias_type, severity, ai_analysis, suggestions, status, req.params.id]
+    );
+    if (!result.rows[0]) return res.status(404).json({ error: 'Not found' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const result = await db.query('DELETE FROM bias_reports WHERE id = $1 RETURNING *', [req.params.id]);
+    if (!result.rows[0]) return res.status(404).json({ error: 'Not found' });
+    res.json({ message: 'Deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+module.exports = router;
