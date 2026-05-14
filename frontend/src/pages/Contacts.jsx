@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { contacts } from '../services/api';
+import { contacts, extractData } from '../services/api';
 import Modal from '../components/Modal';
+import Pagination from '../components/Pagination';
 
 const emptyForm = { name: '', organization: '', role: '', phone: '', email: '', category: 'general', notes: '' };
 
@@ -11,11 +12,17 @@ export default function Contacts({ showToast }) {
   const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState(false);
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [page]);
 
   const load = async () => {
-    try { setItems(await contacts.getAll()); } catch (e) { console.error(e); }
+    try {
+      const r = await contacts.getAll(page, 20);
+      setItems(extractData(r));
+      if (r.pagination) setPagination(r.pagination);
+    } catch (e) { console.error(e); }
   };
 
   const handleSave = async () => {

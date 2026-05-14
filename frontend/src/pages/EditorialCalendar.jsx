@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { editorialCalendar, ai } from '../services/api';
+import { editorialCalendar, ai, extractData } from '../services/api';
 import Modal from '../components/Modal';
 import AIResponse from '../components/AIResponse';
+import Pagination from '../components/Pagination';
 
 const emptyForm = { title: '', section: '', publish_date: '', content_type: 'article', assigned_to: '', status: 'planned', priority: 'medium', description: '' };
 
@@ -14,11 +15,17 @@ export default function EditorialCalendar({ showToast }) {
   const [aiResult, setAiResult] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [page]);
 
   const load = async () => {
-    try { setItems(await editorialCalendar.getAll()); } catch (e) { console.error(e); }
+    try {
+      const r = await editorialCalendar.getAll(page, 20);
+      setItems(extractData(r));
+      if (r.pagination) setPagination(r.pagination);
+    } catch (e) { console.error(e); }
   };
 
   const handleSave = async () => {

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { interviews, ai } from '../services/api';
+import { interviews, ai, extractData } from '../services/api';
 import Modal from '../components/Modal';
 import AIResponse from '../components/AIResponse';
+import Pagination from '../components/Pagination';
 
 const emptyForm = { subject_name: '', subject_role: '', topic: '', scheduled_date: '', duration_minutes: 30, location: '', status: 'scheduled', reporter: '', notes: '' };
 
@@ -14,11 +15,17 @@ export default function Interviews({ showToast }) {
   const [aiResult, setAiResult] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [page]);
 
   const load = async () => {
-    try { setItems(await interviews.getAll()); } catch (e) { console.error(e); }
+    try {
+      const r = await interviews.getAll(page, 20);
+      setItems(extractData(r));
+      if (r.pagination) setPagination(r.pagination);
+    } catch (e) { console.error(e); }
   };
 
   const handleSave = async () => {

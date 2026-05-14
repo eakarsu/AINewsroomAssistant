@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { storyLeads, ai } from '../services/api';
+import { extractData } from '../services/api';
 import Modal from '../components/Modal';
 import AIResponse from '../components/AIResponse';
+import Pagination from '../components/Pagination';
 
 const emptyForm = { title: '', source: '', category: '', priority: 'medium', status: 'new', summary: '', data_feed: '' };
 
@@ -14,11 +16,20 @@ export default function StoryLeads({ showToast }) {
   const [aiResult, setAiResult] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
+  const [showRssModal, setShowRssModal] = useState(false);
+  const [rssUrl, setRssUrl] = useState('');
+  const [rssLoading, setRssLoading] = useState(false);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [page]);
 
   const load = async () => {
-    try { setItems(await storyLeads.getAll()); } catch (e) { console.error(e); }
+    try {
+      const response = await storyLeads.getAll(page, 20);
+      setItems(extractData(response));
+      if (response.pagination) setPagination(response.pagination);
+    } catch (e) { console.error(e); }
   };
 
   const handleSave = async () => {
@@ -60,10 +71,23 @@ export default function StoryLeads({ showToast }) {
     setAiError(null);
     setAiResult(null);
     try {
-      const result = await ai.analyzeLead({ title: item.title, summary: item.summary, source: item.source });
+      const result = await ai.analyzeLead({ title: item.title, summary: item.summary, source: item.source, id: item.id });
       if (result.success) { setAiResult(result); } else { setAiError(result.error); }
     } catch (e) { setAiError(e.message); }
     setAiLoading(false);
+  };
+
+  const handleIngestRss = async () => {
+    if (!rssUrl.trim()) return showToast('Please enter a valid RSS URL', 'error');
+    setRssLoading(true);
+    try {
+      const result = await storyLeads.ingestRss(rssUrl.trim());
+      showToast(result.message || `Ingested ${result.created?.length || 0} leads`);
+      setShowRssModal(false);
+      setRssUrl('');
+      load();
+    } catch (e) { showToast(e.message, 'error'); }
+    setRssLoading(false);
   };
 
   if (selected && !showForm) {
@@ -113,7 +137,7 @@ export default function StoryLeads({ showToast }) {
           {selected.ai_analysis && (
             <div className="detail-field">
               <div className="field-label">Previous AI Analysis</div>
-              <div className="field-value">{selected.ai_analysis}</div>
+              <div className="field-value" style={{ whiteSpace: 'pre-wrap' }}>{selected.ai_analysis}</div>
             </div>
           )}
           <AIResponse result={aiResult} loading={aiLoading} error={aiError} />
@@ -129,11 +153,14 @@ export default function StoryLeads({ showToast }) {
           <h2>Story Leads</h2>
           <p className="subtitle">AI-powered story lead identification from data feeds</p>
         </div>
-        <button className="btn btn-primary" onClick={() => { setForm(emptyForm); setEditing(false); setShowForm(true); }}>+ New Lead</button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn btn-secondary" onClick={() => setShowRssModal(true)}>Ingest RSS</button>
+          <button className="btn btn-primary" onClick={() => { setForm(emptyForm); setEditing(false); setShowForm(true); }}>+ New Lead</button>
+        </div>
       </div>
 
       <div className="stats-row">
-        <div className="stat-box"><div className="stat-number">{items.length}</div><div className="stat-label">Total Leads</div></div>
+        <div className="stat-box"><div className="stat-number">{pagination ? pagination.total : items.length}</div><div className="stat-label">Total Leads</div></div>
         <div className="stat-box"><div className="stat-number" style={{ color: '#ef4444' }}>{items.filter(i => i.priority === 'critical').length}</div><div className="stat-label">Critical</div></div>
         <div className="stat-box"><div className="stat-number" style={{ color: '#3b82f6' }}>{items.filter(i => i.status === 'new').length}</div><div className="stat-label">New</div></div>
         <div className="stat-box"><div className="stat-number" style={{ color: '#a855f7' }}>{items.filter(i => i.status === 'investigating').length}</div><div className="stat-label">Investigating</div></div>
@@ -152,6 +179,10 @@ export default function StoryLeads({ showToast }) {
           </div>
         ))}
       </div>
+
+      {pagination && (
+        <Pagination page={page} totalPages={pagination.totalPages} onPageChange={setPage} />
+      )}
 
       {showForm && (
         <Modal title={editing ? 'Edit Story Lead' : 'New Story Lead'} onClose={() => { setShowForm(false); setEditing(false); }}>
@@ -198,6 +229,29 @@ export default function StoryLeads({ showToast }) {
           <div className="modal-footer">
             <button className="btn btn-secondary" onClick={() => { setShowForm(false); setEditing(false); }}>Cancel</button>
             <button className="btn btn-primary" onClick={handleSave}>{editing ? 'Update' : 'Create'}</button>
+          </div>
+        </Modal>
+      )}
+
+      {showRssModal && (
+        <Modal title="Ingest RSS Feed" onClose={() => { setShowRssModal(false); setRssUrl(''); }}>
+          <div className="form-group">
+            <label>RSS Feed URL</label>
+            <input
+              className="form-control"
+              value={rssUrl}
+              onChange={(e) => setRssUrl(e.target.value)}
+              placeholder="https://feeds.example.com/rss"
+            />
+          </div>
+          <p style={{ color: 'var(--text-dim)', fontSize: 13 }}>
+            The feed will be fetched and each item will be created as a story lead with source "rss".
+          </p>
+          <div className="modal-footer">
+            <button className="btn btn-secondary" onClick={() => { setShowRssModal(false); setRssUrl(''); }}>Cancel</button>
+            <button className="btn btn-primary" onClick={handleIngestRss} disabled={rssLoading}>
+              {rssLoading ? 'Ingesting...' : 'Ingest'}
+            </button>
           </div>
         </Modal>
       )}

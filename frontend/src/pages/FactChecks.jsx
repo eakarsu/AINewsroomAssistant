@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { factChecks, ai } from '../services/api';
+import { extractData } from '../services/api';
 import Modal from '../components/Modal';
 import AIResponse from '../components/AIResponse';
+import Pagination from '../components/Pagination';
 
 const emptyForm = { claim: '', source_article: '', status: 'pending', verdict: 'unverified', evidence: '', checked_by: '' };
 
@@ -14,11 +16,17 @@ export default function FactChecks({ showToast }) {
   const [aiResult, setAiResult] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [page]);
 
   const load = async () => {
-    try { setItems(await factChecks.getAll()); } catch (e) { console.error(e); }
+    try {
+      const response = await factChecks.getAll(page, 20);
+      setItems(extractData(response));
+      if (response.pagination) setPagination(response.pagination);
+    } catch (e) { console.error(e); }
   };
 
   const handleSave = async () => {
@@ -42,7 +50,7 @@ export default function FactChecks({ showToast }) {
   const handleAiCheck = async (item) => {
     setAiLoading(true); setAiError(null); setAiResult(null);
     try {
-      const result = await ai.factCheck({ claim: item.claim, source_article: item.source_article, evidence: item.evidence });
+      const result = await ai.factCheck({ claim: item.claim, source_article: item.source_article, evidence: item.evidence, id: item.id });
       if (result.success) { setAiResult(result); } else { setAiError(result.error); }
     } catch (e) { setAiError(e.message); }
     setAiLoading(false);
@@ -94,6 +102,16 @@ export default function FactChecks({ showToast }) {
             <div className="field-label">Evidence</div>
             <div className="field-value">{selected.evidence || 'No evidence recorded'}</div>
           </div>
+          {selected.ai_analysis && (
+            <div className="detail-field" style={{ marginTop: 16 }}>
+              <div className="field-label">AI Analysis</div>
+              <div style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.25)', borderRadius: 8, padding: 16, marginTop: 8 }}>
+                <pre style={{ margin: 0, fontSize: 12, color: 'var(--text-dim)', whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>
+                  {(() => { try { return JSON.stringify(JSON.parse(selected.ai_analysis), null, 2); } catch { return selected.ai_analysis; } })()}
+                </pre>
+              </div>
+            </div>
+          )}
           <AIResponse result={aiResult} loading={aiLoading} error={aiError} />
         </div>
       </div>
@@ -111,7 +129,7 @@ export default function FactChecks({ showToast }) {
       </div>
 
       <div className="stats-row">
-        <div className="stat-box"><div className="stat-number">{items.length}</div><div className="stat-label">Total Claims</div></div>
+        <div className="stat-box"><div className="stat-number">{pagination ? pagination.total : items.length}</div><div className="stat-label">Total Claims</div></div>
         <div className="stat-box"><div className="stat-number" style={{ color: '#10b981' }}>{items.filter(i => i.verdict === 'true' || i.verdict === 'mostly_true').length}</div><div className="stat-label">True/Mostly True</div></div>
         <div className="stat-box"><div className="stat-number" style={{ color: '#ef4444' }}>{items.filter(i => i.verdict === 'false' || i.verdict === 'mostly_false').length}</div><div className="stat-label">False/Mostly False</div></div>
         <div className="stat-box"><div className="stat-number" style={{ color: '#3b82f6' }}>{items.filter(i => i.status === 'in_progress').length}</div><div className="stat-label">In Progress</div></div>
@@ -126,10 +144,17 @@ export default function FactChecks({ showToast }) {
               <span className={`badge badge-${item.status}`}>{item.status}</span>
             </div>
             <div className="card-summary">{item.evidence}</div>
-            {item.checked_by && <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-dim)' }}>Checked by: {item.checked_by}</div>}
+            {item.ai_analysis && (
+              <div style={{ marginTop: 8, fontSize: 12, color: '#a855f7' }}>AI analysis available</div>
+            )}
+            {item.checked_by && <div style={{ marginTop: 4, fontSize: 12, color: 'var(--text-dim)' }}>Checked by: {item.checked_by}</div>}
           </div>
         ))}
       </div>
+
+      {pagination && (
+        <Pagination page={page} totalPages={pagination.totalPages} onPageChange={setPage} />
+      )}
 
       {showForm && (
         <Modal title={editing ? 'Edit Fact Check' : 'New Fact Check'} onClose={() => { setShowForm(false); setEditing(false); }}>

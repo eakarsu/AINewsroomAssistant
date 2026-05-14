@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { sources, ai } from '../services/api';
+import { sources, ai, extractData } from '../services/api';
 import Modal from '../components/Modal';
 import AIResponse from '../components/AIResponse';
+import Pagination from '../components/Pagination';
 
 const emptyForm = { name: '', type: '', credibility_score: 50, url: '', contact_info: '', verification_status: 'pending', notes: '' };
 
@@ -14,11 +15,17 @@ export default function Sources({ showToast }) {
   const [aiResult, setAiResult] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [page]);
 
   const load = async () => {
-    try { setItems(await sources.getAll()); } catch (e) { console.error(e); }
+    try {
+      const response = await sources.getAll(page, 20);
+      setItems(extractData(response));
+      if (response.pagination) setPagination(response.pagination);
+    } catch (e) { console.error(e); }
   };
 
   const handleSave = async () => {
@@ -47,7 +54,7 @@ export default function Sources({ showToast }) {
   const handleAiVerify = async (item) => {
     setAiLoading(true); setAiError(null); setAiResult(null);
     try {
-      const result = await ai.verifySource({ name: item.name, type: item.type, url: item.url, notes: item.notes });
+      const result = await ai.verifySource({ name: item.name, type: item.type, url: item.url, notes: item.notes, id: item.id });
       if (result.success) { setAiResult(result); } else { setAiError(result.error); }
     } catch (e) { setAiError(e.message); }
     setAiLoading(false);
@@ -119,7 +126,7 @@ export default function Sources({ showToast }) {
       </div>
 
       <div className="stats-row">
-        <div className="stat-box"><div className="stat-number">{items.length}</div><div className="stat-label">Total Sources</div></div>
+        <div className="stat-box"><div className="stat-number">{pagination ? pagination.total : items.length}</div><div className="stat-label">Total Sources</div></div>
         <div className="stat-box"><div className="stat-number" style={{ color: '#10b981' }}>{items.filter(i => i.verification_status === 'verified').length}</div><div className="stat-label">Verified</div></div>
         <div className="stat-box"><div className="stat-number" style={{ color: '#a855f7' }}>{items.filter(i => i.verification_status === 'pending').length}</div><div className="stat-label">Pending</div></div>
         <div className="stat-box"><div className="stat-number" style={{ color: '#ef4444' }}>{items.filter(i => i.verification_status === 'unverified').length}</div><div className="stat-label">Unverified</div></div>
@@ -142,6 +149,10 @@ export default function Sources({ showToast }) {
           </div>
         ))}
       </div>
+
+      {pagination && (
+        <Pagination page={page} totalPages={pagination.totalPages} onPageChange={setPage} />
+      )}
 
       {showForm && (
         <Modal title={editing ? 'Edit Source' : 'New Source'} onClose={() => { setShowForm(false); setEditing(false); }}>

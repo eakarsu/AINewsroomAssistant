@@ -18,21 +18,29 @@ async function request(endpoint, options = {}) {
   return data;
 }
 
+// Helper: extract array from paginated or plain response
+export function extractData(response) {
+  if (Array.isArray(response)) return response;
+  if (response && Array.isArray(response.data)) return response.data;
+  return [];
+}
+
 export const auth = {
   login: (email, password) => request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
   register: (data) => request('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
 };
 
 export const storyLeads = {
-  getAll: () => request('/story-leads'),
+  getAll: (page = 1, limit = 100) => request(`/story-leads?page=${page}&limit=${limit}`),
   getOne: (id) => request(`/story-leads/${id}`),
   create: (data) => request('/story-leads', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => request(`/story-leads/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id) => request(`/story-leads/${id}`, { method: 'DELETE' }),
+  ingestRss: (url) => request('/story-leads/ingest-rss', { method: 'POST', body: JSON.stringify({ url }) }),
 };
 
 export const sources = {
-  getAll: () => request('/sources'),
+  getAll: (page = 1, limit = 100) => request(`/sources?page=${page}&limit=${limit}`),
   getOne: (id) => request(`/sources/${id}`),
   create: (data) => request('/sources', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => request(`/sources/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
@@ -40,7 +48,7 @@ export const sources = {
 };
 
 export const factChecks = {
-  getAll: () => request('/fact-checks'),
+  getAll: (page = 1, limit = 100) => request(`/fact-checks?page=${page}&limit=${limit}`),
   getOne: (id) => request(`/fact-checks/${id}`),
   create: (data) => request('/fact-checks', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => request(`/fact-checks/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
@@ -48,7 +56,7 @@ export const factChecks = {
 };
 
 export const deadlines = {
-  getAll: () => request('/deadlines'),
+  getAll: (page = 1, limit = 100) => request(`/deadlines?page=${page}&limit=${limit}`),
   getOne: (id) => request(`/deadlines/${id}`),
   create: (data) => request('/deadlines', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => request(`/deadlines/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
@@ -56,7 +64,7 @@ export const deadlines = {
 };
 
 export const biasReports = {
-  getAll: () => request('/bias-reports'),
+  getAll: (page = 1, limit = 100) => request(`/bias-reports?page=${page}&limit=${limit}`),
   getOne: (id) => request(`/bias-reports/${id}`),
   create: (data) => request('/bias-reports', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => request(`/bias-reports/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
@@ -64,15 +72,16 @@ export const biasReports = {
 };
 
 export const articleDrafts = {
-  getAll: () => request('/article-drafts'),
+  getAll: (page = 1, limit = 100) => request(`/article-drafts?page=${page}&limit=${limit}`),
   getOne: (id) => request(`/article-drafts/${id}`),
   create: (data) => request('/article-drafts', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => request(`/article-drafts/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id) => request(`/article-drafts/${id}`, { method: 'DELETE' }),
+  publish: (id) => request(`/article-drafts/${id}/publish`, { method: 'PUT' }),
 };
 
 export const trendingTopics = {
-  getAll: () => request('/trending-topics'),
+  getAll: (page = 1, limit = 100) => request(`/trending-topics?page=${page}&limit=${limit}`),
   getOne: (id) => request(`/trending-topics/${id}`),
   create: (data) => request('/trending-topics', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => request(`/trending-topics/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
@@ -80,7 +89,7 @@ export const trendingTopics = {
 };
 
 export const interviews = {
-  getAll: () => request('/interviews'),
+  getAll: (page = 1, limit = 100) => request(`/interviews?page=${page}&limit=${limit}`),
   getOne: (id) => request(`/interviews/${id}`),
   create: (data) => request('/interviews', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => request(`/interviews/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
@@ -88,7 +97,7 @@ export const interviews = {
 };
 
 export const mediaAssets = {
-  getAll: () => request('/media-assets'),
+  getAll: (page = 1, limit = 100) => request(`/media-assets?page=${page}&limit=${limit}`),
   getOne: (id) => request(`/media-assets/${id}`),
   create: (data) => request('/media-assets', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => request(`/media-assets/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
@@ -96,7 +105,7 @@ export const mediaAssets = {
 };
 
 export const editorialCalendar = {
-  getAll: () => request('/editorial-calendar'),
+  getAll: (page = 1, limit = 100) => request(`/editorial-calendar?page=${page}&limit=${limit}`),
   getOne: (id) => request(`/editorial-calendar/${id}`),
   create: (data) => request('/editorial-calendar', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => request(`/editorial-calendar/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
@@ -104,7 +113,7 @@ export const editorialCalendar = {
 };
 
 export const contacts = {
-  getAll: () => request('/contacts'),
+  getAll: (page = 1, limit = 100) => request(`/contacts?page=${page}&limit=${limit}`),
   getOne: (id) => request(`/contacts/${id}`),
   create: (data) => request('/contacts', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => request(`/contacts/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
@@ -112,7 +121,7 @@ export const contacts = {
 };
 
 export const notes = {
-  getAll: () => request('/notes'),
+  getAll: (page = 1, limit = 100) => request(`/notes?page=${page}&limit=${limit}`),
   getOne: (id) => request(`/notes/${id}`),
   create: (data) => request('/notes', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => request(`/notes/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
@@ -120,7 +129,7 @@ export const notes = {
 };
 
 export const expenses = {
-  getAll: () => request('/expenses'),
+  getAll: (page = 1, limit = 100) => request(`/expenses?page=${page}&limit=${limit}`),
   getOne: (id) => request(`/expenses/${id}`),
   create: (data) => request('/expenses', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => request(`/expenses/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
@@ -138,4 +147,14 @@ export const ai = {
   generateQuestions: (data) => request('/ai/generate-questions', { method: 'POST', body: JSON.stringify(data) }),
   analyzeMedia: (data) => request('/ai/analyze-media', { method: 'POST', body: JSON.stringify(data) }),
   contentStrategy: (data) => request('/ai/content-strategy', { method: 'POST', body: JSON.stringify(data) }),
+  optimizeHeadline: (data) => request('/ai/optimize-headline', { method: 'POST', body: JSON.stringify(data) }),
+  generateAngles: (data) => request('/ai/generate-angles', { method: 'POST', body: JSON.stringify(data) }),
+  scoreReadability: (data) => request('/ai/score-readability', { method: 'POST', body: JSON.stringify(data) }),
+  scoreSourceCredibility: (data) => request('/ai/score-source-credibility', { method: 'POST', body: JSON.stringify(data) }),
+  storyCompetitiveAnalysis: (data) => request('/ai/story-competitive-analysis', { method: 'POST', body: JSON.stringify(data) }),
+  sourceMatching: (data) => request('/ai/source-matching', { method: 'POST', body: JSON.stringify(data) }),
+  correctionSuggestion: (data) => request('/ai/correction-suggestion', { method: 'POST', body: JSON.stringify(data) }),
+  embargoManagement: (data) => request('/ai/embargo-management', { method: 'POST', body: JSON.stringify(data) }),
+  accessibilityAltCaption: (data) => request('/ai/accessibility-altcaption', { method: 'POST', body: JSON.stringify(data) }),
+  getHistory: (page = 1, limit = 20) => request(`/ai/history?page=${page}&limit=${limit}`),
 };

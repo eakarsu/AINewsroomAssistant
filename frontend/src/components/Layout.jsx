@@ -17,6 +17,9 @@ export default function Layout({ user, onLogout, children }) {
     { path: '/contacts', label: 'Contact Book', icon: '\u{1F4D1}' },
     { path: '/notes', label: 'Notes', icon: '\u{1F4DD}' },
     { path: '/expenses', label: 'Expenses', icon: '\u{1F4B0}' },
+    { path: '/ai-tools', label: 'AI Tools', icon: '\u2728' },
+    { path: '/ai-insights', label: 'AI Insights', icon: '\u{1F50D}' },
+    { path: '/ai-history', label: 'AI History', icon: '\u{1F916}' },
   ];
 
   return (

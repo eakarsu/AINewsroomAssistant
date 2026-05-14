@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { expenses } from '../services/api';
+import { expenses, extractData } from '../services/api';
 import Modal from '../components/Modal';
+import Pagination from '../components/Pagination';
 
 const emptyForm = { description: '', amount: '', category: 'travel', expense_date: '', related_story: '', reporter: '', status: 'pending', receipt_ref: '' };
 
@@ -10,11 +11,17 @@ export default function Expenses({ showToast }) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [page]);
 
   const load = async () => {
-    try { setItems(await expenses.getAll()); } catch (e) { console.error(e); }
+    try {
+      const r = await expenses.getAll(page, 20);
+      setItems(extractData(r));
+      if (r.pagination) setPagination(r.pagination);
+    } catch (e) { console.error(e); }
   };
 
   const handleSave = async () => {

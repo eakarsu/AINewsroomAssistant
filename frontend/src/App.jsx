@@ -15,6 +15,9 @@ import EditorialCalendar from './pages/EditorialCalendar';
 import Contacts from './pages/Contacts';
 import Notes from './pages/Notes';
 import Expenses from './pages/Expenses';
+import AIHistory from './pages/AIHistory';
+import AITools from './pages/AITools';
+import AIInsights from './pages/AIInsights';
 import Layout from './components/Layout';
 
 export default function App() {
@@ -68,6 +71,9 @@ export default function App() {
           <Route path="/contacts" element={<Contacts showToast={showToast} />} />
           <Route path="/notes" element={<Notes showToast={showToast} />} />
           <Route path="/expenses" element={<Expenses showToast={showToast} />} />
+          <Route path="/ai-tools" element={<AITools showToast={showToast} />} />
+          <Route path="/ai-insights" element={<AIInsights showToast={showToast} />} />
+          <Route path="/ai-history" element={<AIHistory />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Layout>

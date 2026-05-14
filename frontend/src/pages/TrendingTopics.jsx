@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { trendingTopics, ai } from '../services/api';
+import { trendingTopics, ai, extractData } from '../services/api';
 import Modal from '../components/Modal';
 import AIResponse from '../components/AIResponse';
+import Pagination from '../components/Pagination';
 
 const emptyForm = { topic: '', category: '', trend_score: 50, volume: 0, sentiment: 'neutral', region: 'Global', keywords: '', status: 'active' };
 
@@ -14,11 +15,17 @@ export default function TrendingTopics({ showToast }) {
   const [aiResult, setAiResult] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [page]);
 
   const load = async () => {
-    try { setItems(await trendingTopics.getAll()); } catch (e) { console.error(e); }
+    try {
+      const r = await trendingTopics.getAll(page, 20);
+      setItems(extractData(r));
+      if (r.pagination) setPagination(r.pagination);
+    } catch (e) { console.error(e); }
   };
 
   const handleSave = async () => {

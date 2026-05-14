@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { notes } from '../services/api';
+import { notes, extractData } from '../services/api';
 import Modal from '../components/Modal';
+import Pagination from '../components/Pagination';
 
 const emptyForm = { title: '', content: '', category: 'general', related_story: '', pinned: false };
 
@@ -11,11 +12,17 @@ export default function Notes({ showToast }) {
   const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState(false);
   const [filterCategory, setFilterCategory] = useState('all');
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [page]);
 
   const load = async () => {
-    try { setItems(await notes.getAll()); } catch (e) { console.error(e); }
+    try {
+      const r = await notes.getAll(page, 20);
+      setItems(extractData(r));
+      if (r.pagination) setPagination(r.pagination);
+    } catch (e) { console.error(e); }
   };
 
   const handleSave = async () => {

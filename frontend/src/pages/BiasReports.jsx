@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { biasReports, ai } from '../services/api';
+import { extractData } from '../services/api';
 import Modal from '../components/Modal';
 import AIResponse from '../components/AIResponse';
+import Pagination from '../components/Pagination';
 
 const emptyForm = { article_title: '', article_content: '', bias_type: '', severity: 'low', suggestions: '', status: 'pending' };
 
@@ -14,11 +16,17 @@ export default function BiasReports({ showToast }) {
   const [aiResult, setAiResult] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [page]);
 
   const load = async () => {
-    try { setItems(await biasReports.getAll()); } catch (e) { console.error(e); }
+    try {
+      const response = await biasReports.getAll(page, 20);
+      setItems(extractData(response));
+      if (response.pagination) setPagination(response.pagination);
+    } catch (e) { console.error(e); }
   };
 
   const handleSave = async () => {
@@ -42,7 +50,7 @@ export default function BiasReports({ showToast }) {
   const handleAiAnalyze = async (item) => {
     setAiLoading(true); setAiError(null); setAiResult(null);
     try {
-      const result = await ai.analyzeBias({ article_title: item.article_title, article_content: item.article_content });
+      const result = await ai.analyzeBias({ article_title: item.article_title, article_content: item.article_content, id: item.id });
       if (result.success) { setAiResult(result); } else { setAiError(result.error); }
     } catch (e) { setAiError(e.message); }
     setAiLoading(false);
@@ -96,6 +104,16 @@ export default function BiasReports({ showToast }) {
             <div className="field-label">Suggestions</div>
             <div className="field-value">{selected.suggestions || 'No suggestions'}</div>
           </div>
+          {selected.ai_analysis && (
+            <div className="detail-field" style={{ marginTop: 16 }}>
+              <div className="field-label">AI Analysis</div>
+              <div style={{ background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.25)', borderRadius: 8, padding: 16, marginTop: 8 }}>
+                <pre style={{ margin: 0, fontSize: 12, color: 'var(--text-dim)', whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>
+                  {(() => { try { return JSON.stringify(JSON.parse(selected.ai_analysis), null, 2); } catch { return selected.ai_analysis; } })()}
+                </pre>
+              </div>
+            </div>
+          )}
           <AIResponse result={aiResult} loading={aiLoading} error={aiError} />
         </div>
       </div>
@@ -113,7 +131,7 @@ export default function BiasReports({ showToast }) {
       </div>
 
       <div className="stats-row">
-        <div className="stat-box"><div className="stat-number">{items.length}</div><div className="stat-label">Total Reports</div></div>
+        <div className="stat-box"><div className="stat-number">{pagination ? pagination.total : items.length}</div><div className="stat-label">Total Reports</div></div>
         <div className="stat-box"><div className="stat-number" style={{ color: '#ef4444' }}>{items.filter(i => i.status === 'flagged').length}</div><div className="stat-label">Flagged</div></div>
         <div className="stat-box"><div className="stat-number" style={{ color: '#10b981' }}>{items.filter(i => i.status === 'reviewed').length}</div><div className="stat-label">Reviewed</div></div>
         <div className="stat-box"><div className="stat-number" style={{ color: '#f97316' }}>{items.filter(i => i.severity === 'high' || i.severity === 'critical').length}</div><div className="stat-label">High/Critical</div></div>
@@ -129,10 +147,15 @@ export default function BiasReports({ showToast }) {
               {item.bias_type && <span className="badge" style={{ background: 'rgba(168,85,247,0.15)', color: '#a855f7' }}>{item.bias_type}</span>}
             </div>
             <div className="card-summary">{item.article_content}</div>
-            {item.suggestions && <div style={{ marginTop: 8, fontSize: 12, color: '#f59e0b' }}>Suggestion: {item.suggestions.substring(0, 80)}...</div>}
+            {item.ai_analysis && <div style={{ marginTop: 8, fontSize: 12, color: '#a855f7' }}>AI analysis available</div>}
+            {item.suggestions && <div style={{ marginTop: 4, fontSize: 12, color: '#f59e0b' }}>Suggestion: {item.suggestions.substring(0, 80)}...</div>}
           </div>
         ))}
       </div>
+
+      {pagination && (
+        <Pagination page={page} totalPages={pagination.totalPages} onPageChange={setPage} />
+      )}
 
       {showForm && (
         <Modal title={editing ? 'Edit Bias Report' : 'New Bias Report'} onClose={() => { setShowForm(false); setEditing(false); }}>

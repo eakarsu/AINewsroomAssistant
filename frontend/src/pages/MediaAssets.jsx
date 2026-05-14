@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { mediaAssets, ai } from '../services/api';
+import { mediaAssets, ai, extractData } from '../services/api';
 import Modal from '../components/Modal';
 import AIResponse from '../components/AIResponse';
+import Pagination from '../components/Pagination';
 
 const emptyForm = { title: '', type: 'photo', source: '', description: '', article_title: '', photographer: '', location: '', license: 'unknown', status: 'available' };
 
@@ -14,11 +15,17 @@ export default function MediaAssets({ showToast }) {
   const [aiResult, setAiResult] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [page]);
 
   const load = async () => {
-    try { setItems(await mediaAssets.getAll()); } catch (e) { console.error(e); }
+    try {
+      const r = await mediaAssets.getAll(page, 20);
+      setItems(extractData(r));
+      if (r.pagination) setPagination(r.pagination);
+    } catch (e) { console.error(e); }
   };
 
   const handleSave = async () => {
