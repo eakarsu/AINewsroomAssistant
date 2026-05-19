@@ -55,6 +55,7 @@ app.use('/api/expenses', expensesRoutes);
 app.use('/api/ai', aiRoutes);
 // Apply pass 5 — backlog: cms/paywall/ads/social/comments/archive
 app.use('/api/integrations', require('./routes/integrations'));
+app.use('/api/custom-views', require('./routes/customViews'));
 
 // Health check
 app.get('/api/health', (req, res) => {

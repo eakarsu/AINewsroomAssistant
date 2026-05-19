@@ -20,6 +20,7 @@ export default function Layout({ user, onLogout, children }) {
     { path: '/ai-tools', label: 'AI Tools', icon: '\u2728' },
     { path: '/ai-insights', label: 'AI Insights', icon: '\u{1F50D}' },
     { path: '/ai-history', label: 'AI History', icon: '\u{1F916}' },
+    { path: '/custom-views', label: 'Newsroom Views', icon: '\u{1F4F0}' },
   ];
 
   return (

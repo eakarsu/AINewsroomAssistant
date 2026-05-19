@@ -18,6 +18,7 @@ import Expenses from './pages/Expenses';
 import AIHistory from './pages/AIHistory';
 import AITools from './pages/AITools';
 import AIInsights from './pages/AIInsights';
+import CustomViewsPage from './pages/CustomViewsPage';
 import Layout from './components/Layout';
 
 export default function App() {
@@ -74,6 +75,7 @@ export default function App() {
           <Route path="/ai-tools" element={<AITools showToast={showToast} />} />
           <Route path="/ai-insights" element={<AIInsights showToast={showToast} />} />
           <Route path="/ai-history" element={<AIHistory />} />
+          <Route path="/custom-views" element={<CustomViewsPage />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Layout>
