@@ -21,6 +21,9 @@ import AIInsights from './pages/AIInsights';
 import CustomViewsPage from './pages/CustomViewsPage';
 import Layout from './components/Layout';
 
+import CodexCustomVizFeature from './pages/CodexCustomVizFeature';
+import CodexOperationsFeature from './pages/CodexOperationsFeature';
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [toast, setToast] = useState(null);
@@ -58,6 +61,9 @@ export default function App() {
     <>
       <Layout user={user} onLogout={handleLogout}>
         <Routes>
+        <Route path="/codex/custom-viz" element={<CodexCustomVizFeature />} />
+        <Route path="/codex/operations" element={<CodexOperationsFeature />} />
+
           <Route path="/" element={<Dashboard />} />
           <Route path="/story-leads" element={<StoryLeads showToast={showToast} />} />
           <Route path="/sources" element={<Sources showToast={showToast} />} />
