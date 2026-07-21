@@ -20,16 +20,22 @@ const contactsRoutes = require('./routes/contacts');
 const notesRoutes = require('./routes/notes');
 const expensesRoutes = require('./routes/expenses');
 const aiRoutes = require('./routes/ai');
+const {validateRuntime}=require('./governance/runtime');
+const {createProviderGate}=require('./governance/providerGate');
+const governanceRouter=require('./governance/router');
+validateRuntime();
 
 const app = express();
 const PORT = process.env.BACKEND_PORT || 3001;
 
 app.use(helmet());
-app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173', credentials: true }));
+const allowedOrigins=String(process.env.CORS_ORIGINS||process.env.CLIENT_URL||'http://localhost:5173').split(',').map(v=>v.trim()).filter(Boolean);
+app.use(cors({origin:(origin,cb)=>!origin||allowedOrigins.includes(origin)?cb(null,true):cb(new Error('Origin not allowed by CORS')),credentials:true}));
 app.use(express.json({ limit: '10mb' }));
+app.use(createProviderGate(['/api/ai','/api/gap','/api/editorial-director-agent','/api/bias-realtime-stream','/api/fact-check-autonomous','/api/source-credibility-stream','/api/multi-format-content']));
 
 // Ensure ai_analyses table exists
-db.query(`CREATE TABLE IF NOT EXISTS ai_analyses (
+if(process.env.ENABLE_LEGACY_SCHEMA_BOOTSTRAP==='true') db.query(`CREATE TABLE IF NOT EXISTS ai_analyses (
   id SERIAL PRIMARY KEY,
   endpoint VARCHAR(100),
   entity_id INTEGER,
@@ -56,6 +62,7 @@ app.use('/api/ai', aiRoutes);
 // Apply pass 5 — backlog: cms/paywall/ads/social/comments/archive
 app.use('/api/integrations', require('./routes/integrations'));
 app.use('/api/custom-views', require('./routes/customViews'));
+app.use('/api/governed-newsroom-corpus',governanceRouter);
 
 // Health check
 app.get('/api/health', (req, res) => {

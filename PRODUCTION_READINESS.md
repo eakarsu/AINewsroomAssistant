@@ -1,0 +1,5 @@
+# Governed newsroom corpus
+The durable path is `/api/governed-newsroom-corpus`. It records resumable sources, encrypted object references, parsing/deduplication, permissioned indexing, versioned retrieval evaluations, citations/conflicts, injection scans, fact-check/editorial disposition, publication/correction, and deletion provenance.
+Apply `backend/migrations/001_governed_newsroom_corpus.sql` separately. Repositories, object storage, parser queues, search, CMS, wires, and archives remain unconfigured until credentials, licenses, deletion propagation, replay tests, and newsroom approval exist. Generated/provider routes are quarantined.
+Low recall/faithfulness, stale/unresolved citations, conflicts, or injection findings force abstention. Embargo, privilege, source safety, defamation, corrections, and publication remain human editorial/legal gates.
+Use `.env.example`, keep bootstrap/demo/provider flags false, and run `node --test backend/src/governance/*.test.cjs` and `bash -n start.sh`. Startup is nondestructive.

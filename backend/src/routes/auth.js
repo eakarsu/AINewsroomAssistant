@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../models/db');
+const authenticateToken = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -28,11 +29,12 @@ router.post('/login', async (req, res) => {
 
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, name, role } = req.body;
+    const { email, password, name } = req.body;
+    if(!password||password.length<12)return res.status(400).json({error:'Password must be at least 12 characters'});
     const hash = await bcrypt.hash(password, 10);
     const result = await db.query(
       'INSERT INTO users (email, password_hash, name, role) VALUES ($1, $2, $3, $4) RETURNING id, email, name, role',
-      [email, hash, name, role || 'reporter']
+      [email, hash, name, 'reporter']
     );
     const user = result.rows[0];
     const token = jwt.sign(
@@ -45,6 +47,10 @@ router.post('/register', async (req, res) => {
     if (err.code === '23505') return res.status(400).json({ error: 'Email already exists' });
     res.status(500).json({ error: err.message });
   }
+});
+
+router.get('/me', authenticateToken, (req, res) => {
+  res.json({ user: req.user });
 });
 
 module.exports = router;
