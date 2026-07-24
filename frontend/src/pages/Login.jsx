@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { auth } from '../services/api';
 
+const demoPassword = import.meta.env.VITE_ENABLE_DEMO_CREDENTIAL_AUTOFILL === 'true'
+  ? import.meta.env.VITE_DEMO_PASSWORD || ''
+  : '';
+
 export default function Login({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,9 +27,9 @@ export default function Login({ onLogin }) {
 
   const quickLogin = (role) => {
     const creds = {
-      editor: { email: 'editor@newsroom.com', password: 'password123' },
-      reporter: { email: 'reporter@newsroom.com', password: 'password123' },
-      admin: { email: 'admin@newsroom.com', password: 'password123' },
+      editor: { email: 'editor@newsroom.com', password: demoPassword },
+      reporter: { email: 'reporter@newsroom.com', password: demoPassword },
+      admin: { email: 'admin@newsroom.com', password: demoPassword },
     };
     setEmail(creds[role].email);
     setPassword(creds[role].password);
@@ -69,9 +73,9 @@ export default function Login({ onLogin }) {
         <div className="quick-login">
           <p>Quick Login</p>
           <div className="quick-login-btns">
-            <button onClick={() => quickLogin('editor')}>Editor</button>
-            <button onClick={() => quickLogin('reporter')}>Reporter</button>
-            <button onClick={() => quickLogin('admin')}>Admin</button>
+            <button disabled={!demoPassword} onClick={() => quickLogin('editor')}>Editor</button>
+            <button disabled={!demoPassword} onClick={() => quickLogin('reporter')}>Reporter</button>
+            <button disabled={!demoPassword} onClick={() => quickLogin('admin')}>Admin</button>
           </div>
         </div>
       </div>

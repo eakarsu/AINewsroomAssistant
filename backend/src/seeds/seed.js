@@ -3,6 +3,12 @@ const bcrypt = require('bcryptjs');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../../../.env') });
 
+function requireDemoPassword() {
+  const password = process.env.DEMO_PASSWORD;
+  if (!password || password.length < 12) throw new Error('DEMO_PASSWORD must be at least 12 characters');
+  return password;
+}
+
 const pool = new Pool({
   host: process.env.DB_HOST || 'localhost',
   port: process.env.DB_PORT || 5432,
@@ -221,7 +227,7 @@ async function seed() {
     `);
 
     // Seed users
-    const passwordHash = await bcrypt.hash('password123', 10);
+    const passwordHash = await bcrypt.hash(requireDemoPassword(), 10);
     await client.query(`
       INSERT INTO users (email, password_hash, name, role) VALUES
       ('editor@newsroom.com', '${passwordHash}', 'Sarah Chen', 'editor'),
@@ -490,10 +496,7 @@ async function seed() {
     `);
 
     console.log('Database seeded successfully!');
-    console.log('Login credentials:');
-    console.log('  Editor:   editor@newsroom.com / password123');
-    console.log('  Reporter: reporter@newsroom.com / password123');
-    console.log('  Admin:    admin@newsroom.com / password123');
+    console.log('Demo login users provisioned: editor, reporter, admin.');
   } catch (err) {
     console.error('Seed error:', err.message);
     throw err;
