@@ -49,8 +49,14 @@ router.post('/register', async (req, res) => {
   }
 });
 
-router.get('/me', authenticateToken, (req, res) => {
-  res.json({ user: req.user });
+router.get('/me', authenticateToken, async (req, res) => {
+  try {
+    const result = await db.query('SELECT id,email,name,role,created_at FROM users WHERE id=$1', [req.user.id]);
+    if (!result.rows.length) return res.status(404).json({ error: 'User not found' });
+    res.json({ user: result.rows[0] });
+  } catch (_) {
+    res.status(503).json({ error: 'Authentication service unavailable' });
+  }
 });
 
 module.exports = router;

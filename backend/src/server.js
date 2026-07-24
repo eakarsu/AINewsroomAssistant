@@ -32,7 +32,7 @@ app.use(helmet());
 const allowedOrigins=String(process.env.CORS_ORIGINS||process.env.CLIENT_URL||'http://localhost:5173').split(',').map(v=>v.trim()).filter(Boolean);
 app.use(cors({origin:(origin,cb)=>!origin||allowedOrigins.includes(origin)?cb(null,true):cb(new Error('Origin not allowed by CORS')),credentials:true}));
 app.use(express.json({ limit: '10mb' }));
-app.use(createProviderGate(['/api/ai','/api/gap','/api/editorial-director-agent','/api/bias-realtime-stream','/api/fact-check-autonomous','/api/source-credibility-stream','/api/multi-format-content']));
+app.use(createProviderGate(['/api/gap','/api/editorial-director-agent','/api/bias-realtime-stream','/api/fact-check-autonomous','/api/source-credibility-stream','/api/multi-format-content']));
 
 // Ensure ai_analyses table exists
 if(process.env.ENABLE_LEGACY_SCHEMA_BOOTSTRAP==='true') db.query(`CREATE TABLE IF NOT EXISTS ai_analyses (

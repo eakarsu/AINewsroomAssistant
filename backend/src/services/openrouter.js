@@ -1,22 +1,17 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../../../.env') });
 
-const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-
 async function callOpenRouter(systemPrompt, userMessage) {
   const apiKey = process.env.OPENROUTER_API_KEY;
   const model = process.env.OPENROUTER_MODEL || 'anthropic/claude-3-5-sonnet-20241022';
 
   if (!apiKey || apiKey === 'your_openrouter_api_key_here') {
-    return {
-      success: false,
-      error: 'OpenRouter API key not configured. Please set OPENROUTER_API_KEY in .env file.',
-      result: null,
-    };
+    throw new Error('OPENROUTER_API_KEY is not configured');
   }
 
   try {
-    const response = await fetch(OPENROUTER_API_URL, {
+    const baseUrl = (process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1').replace(/\/$/, '');
+    const response = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
@@ -35,17 +30,12 @@ async function callOpenRouter(systemPrompt, userMessage) {
       }),
     });
 
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
 
-    if (data.error) {
-      return {
-        success: false,
-        error: data.error.message || 'OpenRouter API error',
-        result: null,
-      };
-    }
+    if (!response.ok || data.error) throw new Error(data.error?.message || `OpenRouter HTTP ${response.status}`);
 
-    const content = data.choices?.[0]?.message?.content || '';
+    const content = data.choices?.[0]?.message?.content;
+    if (!content || !String(content).trim()) throw new Error('OpenRouter returned empty content');
     return {
       success: true,
       error: null,
@@ -54,11 +44,7 @@ async function callOpenRouter(systemPrompt, userMessage) {
       usage: data.usage,
     };
   } catch (err) {
-    return {
-      success: false,
-      error: err.message,
-      result: null,
-    };
+    throw new Error(`OpenRouter request failed: ${err.message}`);
   }
 }
 
