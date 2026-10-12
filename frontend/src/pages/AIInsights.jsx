@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import AIReport from '../components/AIReport';
+import FullFieldPresets from '../components/FullFieldPresets';
+import { AI_INSIGHT_PRESETS } from '../components/newsroomAIPresets';
 import { ai } from '../services/api';
 
 const TOOLS = [
@@ -15,9 +18,9 @@ export default function AIInsights({ showToast }) {
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
 
-  const [compForm, setCompForm] = useState({ topic: '', angle: '', published_articles: '', target_outlet: '' });
-  const [matchForm, setMatchForm] = useState({ story_topic: '', desired_perspective: '', source_pool: '' });
-  const [corrForm, setCorrForm] = useState({ original_article: '', error_description: '', context: '' });
+  const [compForm, setCompForm] = useState({ topic: '', your_angle: '', competitor_coverage: '', deadline: '' });
+  const [matchForm, setMatchForm] = useState({ story_topic: '', expertise_needed: '', geography: '', language: '' });
+  const [corrForm, setCorrForm] = useState({ article_text: '', complaint: '', evidence: '' });
   const [embargoForm, setEmbargoForm] = useState({ story_title: '', embargo_until: '', jurisdictions: '', distribution_partners: '', sensitivity: 'standard' });
   const [a11yForm, setA11yForm] = useState({ media_kind: 'image', media_description: '', headline: '', caption_lang: 'en', audience: 'general' });
 
@@ -30,38 +33,37 @@ export default function AIInsights({ showToast }) {
       if (activeTool === 'competitive') {
         const body = {
           topic: compForm.topic,
-          angle: compForm.angle,
-          target_outlet: compForm.target_outlet,
+          your_angle: compForm.your_angle,
+          deadline: compForm.deadline,
         };
-        if (compForm.published_articles.trim()) {
+        if (compForm.competitor_coverage.trim()) {
           try {
-            body.published_articles = JSON.parse(compForm.published_articles);
+            body.competitor_coverage = JSON.parse(compForm.competitor_coverage);
           } catch {
-            body.published_articles = compForm.published_articles
+            body.competitor_coverage = compForm.competitor_coverage
               .split('\n')
-              .map((s) => s.trim())
+              .map((value) => value.trim())
               .filter(Boolean);
           }
         }
         r = await ai.storyCompetitiveAnalysis(body);
       } else if (activeTool === 'source-match') {
-        const body = {
+        r = await ai.sourceMatching({
           story_topic: matchForm.story_topic,
-          desired_perspective: matchForm.desired_perspective,
-        };
-        if (matchForm.source_pool.trim()) {
-          try {
-            body.source_pool = JSON.parse(matchForm.source_pool);
-          } catch {
-            body.source_pool = matchForm.source_pool;
-          }
-        }
-        r = await ai.sourceMatching(body);
+          expertise_needed: matchForm.expertise_needed,
+          geography: matchForm.geography,
+          language: matchForm.language,
+        });
       } else if (activeTool === 'correction') {
+        let evidence = corrForm.evidence;
+        if (corrForm.evidence.trim()) {
+          try { evidence = JSON.parse(corrForm.evidence); }
+          catch { evidence = corrForm.evidence.split('\n').map((value) => value.trim()).filter(Boolean); }
+        }
         r = await ai.correctionSuggestion({
-          original_article: corrForm.original_article,
-          error_description: corrForm.error_description,
-          context: corrForm.context,
+          article_text: corrForm.article_text,
+          complaint: corrForm.complaint,
+          evidence,
         });
       } else if (activeTool === 'embargo') {
         const body = {
@@ -98,12 +100,7 @@ export default function AIInsights({ showToast }) {
 
   const renderResult = () => {
     if (!result) return null;
-    const data = result.result || result.data || result.parsed || result;
-    return (
-      <pre style={{ background: '#1e293b', color: '#94a3b8', borderRadius: 8, padding: 16, fontSize: 12, overflow: 'auto', maxHeight: 500 }}>
-        {typeof data === 'string' ? data : JSON.stringify(data, null, 2)}
-      </pre>
-    );
+    return <AIReport response={result} title={TOOLS.find((tool) => tool.id === activeTool)?.label || 'AI insight'} />;
   };
 
   return (
@@ -134,6 +131,7 @@ export default function AIInsights({ showToast }) {
             <p style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Compare against published articles and find a unique angle.</p>
           </div>
           <div className="card-body">
+            <FullFieldPresets value={compForm} onChange={(next) => { setCompForm(next); setResult(null); setError(''); }} presets={AI_INSIGHT_PRESETS.competitive} disabled={loading} />
             <div className="form-grid-2">
               <div className="form-group">
                 <label>Topic *</label>
@@ -141,19 +139,19 @@ export default function AIInsights({ showToast }) {
               </div>
               <div className="form-group">
                 <label>Your Angle</label>
-                <input value={compForm.angle} onChange={(e) => setCompForm({ ...compForm, angle: e.target.value })} placeholder="Small business impact" />
+                <input value={compForm.your_angle} onChange={(e) => setCompForm({ ...compForm, your_angle: e.target.value })} placeholder="Small business impact" />
               </div>
               <div className="form-group">
-                <label>Target Outlet</label>
-                <input value={compForm.target_outlet} onChange={(e) => setCompForm({ ...compForm, target_outlet: e.target.value })} placeholder="National daily, trade pub..." />
+                <label>Deadline</label>
+                <input value={compForm.deadline} onChange={(e) => setCompForm({ ...compForm, deadline: e.target.value })} placeholder="2026-10-14T18:00:00-04:00" />
               </div>
               <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                <label>Published Articles (one per line, or JSON)</label>
+                <label>Competitor Coverage (one item per line, or JSON)</label>
                 <textarea
                   rows={5}
-                  value={compForm.published_articles}
-                  onChange={(e) => setCompForm({ ...compForm, published_articles: e.target.value })}
-                  placeholder="Headline 1&#10;Headline 2&#10;..."
+                  value={compForm.competitor_coverage}
+                  onChange={(e) => setCompForm({ ...compForm, competitor_coverage: e.target.value })}
+                  placeholder='[{"outlet":"Example Daily","headline":"Coverage title","focus":"policy"}]'
                 />
               </div>
             </div>
@@ -168,23 +166,23 @@ export default function AIInsights({ showToast }) {
             <p style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Match the best sources from your contact pool to a story.</p>
           </div>
           <div className="card-body">
+            <FullFieldPresets value={matchForm} onChange={(next) => { setMatchForm(next); setResult(null); setError(''); }} presets={AI_INSIGHT_PRESETS['source-match']} disabled={loading} />
             <div className="form-grid-2">
               <div className="form-group">
                 <label>Story Topic *</label>
                 <input value={matchForm.story_topic} onChange={(e) => setMatchForm({ ...matchForm, story_topic: e.target.value })} placeholder="e.g., Hospital staffing shortages" />
               </div>
               <div className="form-group">
-                <label>Desired Perspective</label>
-                <input value={matchForm.desired_perspective} onChange={(e) => setMatchForm({ ...matchForm, desired_perspective: e.target.value })} placeholder="Frontline nurse view" />
+                <label>Expertise Needed</label>
+                <input value={matchForm.expertise_needed} onChange={(e) => setMatchForm({ ...matchForm, expertise_needed: e.target.value })} placeholder="Emergency medicine and workforce data" />
               </div>
-              <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                <label>Source Pool (JSON or free text)</label>
-                <textarea
-                  rows={5}
-                  value={matchForm.source_pool}
-                  onChange={(e) => setMatchForm({ ...matchForm, source_pool: e.target.value })}
-                  placeholder='[{"name":"Dr. Smith","expertise":"public health"}]'
-                />
+              <div className="form-group">
+                <label>Geography</label>
+                <input value={matchForm.geography} onChange={(e) => setMatchForm({ ...matchForm, geography: e.target.value })} placeholder="Metro region" />
+              </div>
+              <div className="form-group">
+                <label>Language</label>
+                <input value={matchForm.language} onChange={(e) => setMatchForm({ ...matchForm, language: e.target.value })} placeholder="English" />
               </div>
             </div>
           </div>
@@ -198,17 +196,18 @@ export default function AIInsights({ showToast }) {
             <p style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Draft a publishable correction notice.</p>
           </div>
           <div className="card-body">
+            <FullFieldPresets value={corrForm} onChange={(next) => { setCorrForm(next); setResult(null); setError(''); }} presets={AI_INSIGHT_PRESETS.correction} disabled={loading} />
             <div className="form-group">
               <label>Original Article *</label>
-              <textarea rows={6} value={corrForm.original_article} onChange={(e) => setCorrForm({ ...corrForm, original_article: e.target.value })} placeholder="Paste the article text..." />
+              <textarea rows={6} value={corrForm.article_text} onChange={(e) => setCorrForm({ ...corrForm, article_text: e.target.value })} placeholder="Paste the article text..." />
             </div>
             <div className="form-group">
-              <label>Error Description *</label>
-              <textarea rows={3} value={corrForm.error_description} onChange={(e) => setCorrForm({ ...corrForm, error_description: e.target.value })} placeholder="What is incorrect?" />
+              <label>Complaint or Error Description *</label>
+              <textarea rows={3} value={corrForm.complaint} onChange={(e) => setCorrForm({ ...corrForm, complaint: e.target.value })} placeholder="What is incorrect?" />
             </div>
             <div className="form-group">
-              <label>Context</label>
-              <textarea rows={2} value={corrForm.context} onChange={(e) => setCorrForm({ ...corrForm, context: e.target.value })} placeholder="Any additional context" />
+              <label>Evidence (one item per line, or JSON)</label>
+              <textarea rows={3} value={corrForm.evidence} onChange={(e) => setCorrForm({ ...corrForm, evidence: e.target.value })} placeholder='[{"type":"official record","finding":"Correct value"}]' />
             </div>
           </div>
         </div>
@@ -221,6 +220,7 @@ export default function AIInsights({ showToast }) {
             <p style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Build a multi-timezone embargo plan with partner notifications and leak-risk mitigations.</p>
           </div>
           <div className="card-body">
+            <FullFieldPresets value={embargoForm} onChange={(next) => { setEmbargoForm(next); setResult(null); setError(''); }} presets={AI_INSIGHT_PRESETS.embargo} disabled={loading} />
             <div className="form-grid-2">
               <div className="form-group">
                 <label>Story Title *</label>
@@ -256,6 +256,7 @@ export default function AIInsights({ showToast }) {
             <p style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Generate WCAG-compliant alt text and caption variants for newsroom media.</p>
           </div>
           <div className="card-body">
+            <FullFieldPresets value={a11yForm} onChange={(next) => { setA11yForm(next); setResult(null); setError(''); }} presets={AI_INSIGHT_PRESETS.a11y} disabled={loading} />
             <div className="form-grid-2">
               <div className="form-group">
                 <label>Media Kind</label>
@@ -296,14 +297,7 @@ export default function AIInsights({ showToast }) {
         </div>
       )}
 
-      {result && (
-        <div className="card" style={{ marginTop: 16 }}>
-          <div className="card-header">
-            <h2>Result</h2>
-          </div>
-          <div className="card-body">{renderResult()}</div>
-        </div>
-      )}
+      {result && renderResult()}
     </div>
   );
 }

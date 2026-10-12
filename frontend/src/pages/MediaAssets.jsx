@@ -1,3 +1,5 @@
+import AIWorkspaceModal from '../components/AIWorkspaceModal';
+import '../components/AIWorkspace.css';
 import React, { useState, useEffect } from 'react';
 import { mediaAssets, ai, extractData } from '../services/api';
 import Modal from '../components/Modal';
@@ -61,7 +63,7 @@ export default function MediaAssets({ showToast }) {
     return (
       <div>
         <button className="back-btn" onClick={() => { setSelected(null); setAiResult(null); setAiError(null); }}>&larr; Back to Media Assets</button>
-        <div className="detail-view">
+        <AIWorkspaceModal title="Record details" onClose={() => setSelected(null)}>
           <div className="detail-header">
             <div>
               <h3>{typeIcon[selected.type] || '\u{1F4CE}'} {selected.title}</h3>
@@ -100,7 +102,7 @@ export default function MediaAssets({ showToast }) {
             <div className="field-value">{selected.description || 'No description'}</div>
           </div>
           <AIResponse result={aiResult} loading={aiLoading} error={aiError} />
-        </div>
+        </AIWorkspaceModal>
       </div>
     );
   }

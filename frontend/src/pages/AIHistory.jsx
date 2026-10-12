@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import AIReport from '../components/AIReport';
 import { ai } from '../services/api';
 import Pagination from '../components/Pagination';
 
@@ -19,16 +20,6 @@ export default function AIHistory() {
       setPagination(response.pagination);
     } catch (e) { console.error(e); }
     setLoading(false);
-  };
-
-  const formatResult = (result) => {
-    if (!result) return '';
-    try {
-      const parsed = JSON.parse(result);
-      return JSON.stringify(parsed, null, 2);
-    } catch {
-      return result;
-    }
   };
 
   const endpointBadgeColor = (ep) => {
@@ -126,22 +117,8 @@ export default function AIHistory() {
               </div>
             </div>
             {expanded === item.id && (
-              <div style={{ marginTop: 12, borderTop: '1px solid var(--border-light)', paddingTop: 12 }}>
-                <pre style={{
-                  margin: 0,
-                  fontSize: 12,
-                  color: 'var(--text-dim)',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                  maxHeight: 400,
-                  overflowY: 'auto',
-                  fontFamily: 'monospace',
-                  background: 'rgba(0,0,0,0.1)',
-                  padding: 12,
-                  borderRadius: 6,
-                }}>
-                  {formatResult(item.result)}
-                </pre>
+              <div style={{ marginTop: 12, borderTop: '1px solid var(--border-light)', paddingTop: 12 }} onClick={(event) => event.stopPropagation()}>
+                <AIReport response={item.result} title={`${item.endpoint.replace(/-/g, ' ')} result`} />
               </div>
             )}
           </div>

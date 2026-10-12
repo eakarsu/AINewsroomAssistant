@@ -1,3 +1,5 @@
+import AIWorkspaceModal from '../components/AIWorkspaceModal';
+import '../components/AIWorkspace.css';
 import React, { useState, useEffect } from 'react';
 import { articleDrafts, ai } from '../services/api';
 import { extractData } from '../services/api';
@@ -93,7 +95,7 @@ export default function ArticleDrafts({ showToast }) {
         <button className="back-btn" onClick={() => { setSelected(null); setAiResult(null); setAiError(null); }}>
           &larr; Back to Article Drafts
         </button>
-        <div className="detail-view">
+        <AIWorkspaceModal title="Record details" onClose={() => setSelected(null)}>
           <div className="detail-header">
             <div>
               <h3>{selected.title}</h3>
@@ -141,19 +143,11 @@ export default function ArticleDrafts({ showToast }) {
           {selected.seo_metadata && (
             <div className="detail-field" style={{ marginTop: 16 }}>
               <div className="field-label">SEO Metadata (AI Generated)</div>
-              <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 8, padding: 16, marginTop: 8 }}>
-                {typeof selected.seo_metadata === 'object' ? (
-                  <pre style={{ margin: 0, fontSize: 12, color: 'var(--text-dim)', whiteSpace: 'pre-wrap' }}>
-                    {JSON.stringify(selected.seo_metadata, null, 2)}
-                  </pre>
-                ) : (
-                  <div style={{ color: 'var(--text-dim)', fontSize: 13 }}>{JSON.stringify(selected.seo_metadata)}</div>
-                )}
-              </div>
+              <AIResponse result={{ result: selected.seo_metadata }} />
             </div>
           )}
           <AIResponse result={aiResult} loading={aiLoading} error={aiError} />
-        </div>
+        </AIWorkspaceModal>
       </div>
     );
   }

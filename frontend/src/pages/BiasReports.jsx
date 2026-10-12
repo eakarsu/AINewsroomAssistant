@@ -1,3 +1,5 @@
+import AIWorkspaceModal from '../components/AIWorkspaceModal';
+import '../components/AIWorkspace.css';
 import React, { useState, useEffect } from 'react';
 import { biasReports, ai } from '../services/api';
 import { extractData } from '../services/api';
@@ -62,7 +64,7 @@ export default function BiasReports({ showToast }) {
     return (
       <div>
         <button className="back-btn" onClick={() => { setSelected(null); setAiResult(null); setAiError(null); }}>&larr; Back to Bias Reports</button>
-        <div className="detail-view">
+        <AIWorkspaceModal title="Record details" onClose={() => setSelected(null)}>
           <div className="detail-header">
             <div>
               <h3>{selected.article_title}</h3>
@@ -107,15 +109,11 @@ export default function BiasReports({ showToast }) {
           {selected.ai_analysis && (
             <div className="detail-field" style={{ marginTop: 16 }}>
               <div className="field-label">AI Analysis</div>
-              <div style={{ background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.25)', borderRadius: 8, padding: 16, marginTop: 8 }}>
-                <pre style={{ margin: 0, fontSize: 12, color: 'var(--text-dim)', whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>
-                  {(() => { try { return JSON.stringify(JSON.parse(selected.ai_analysis), null, 2); } catch { return selected.ai_analysis; } })()}
-                </pre>
-              </div>
+              <AIResponse result={{ result: selected.ai_analysis }} />
             </div>
           )}
           <AIResponse result={aiResult} loading={aiLoading} error={aiError} />
-        </div>
+        </AIWorkspaceModal>
       </div>
     );
   }

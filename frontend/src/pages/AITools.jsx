@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import AIReport from '../components/AIReport';
+import FullFieldPresets from '../components/FullFieldPresets';
+import { AI_TOOL_PRESETS } from '../components/newsroomAIPresets';
 import { ai } from '../services/api';
 
 const TOOLS = [
@@ -37,22 +40,9 @@ export default function AITools({ showToast }) {
     setLoading(false);
   };
 
-  const renderJSON = (obj) => {
-    if (!obj) return null;
-    return (
-      <pre style={{ background: '#1e293b', color: '#94a3b8', borderRadius: 8, padding: 16, fontSize: 12, overflow: 'auto', maxHeight: 400 }}>
-        {JSON.stringify(obj, null, 2)}
-      </pre>
-    );
-  };
-
   const renderText = (text) => {
     if (!text) return null;
-    return (
-      <div style={{ background: '#f8fafc', borderRadius: 8, padding: 16, whiteSpace: 'pre-wrap', fontSize: 14, lineHeight: 1.7, color: '#334155', marginTop: 12 }}>
-        {text}
-      </div>
-    );
+    return <AIReport response={text} title="AI result" />;
   };
 
   return (
@@ -83,6 +73,7 @@ export default function AITools({ showToast }) {
             <p style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Generate multiple headline variants with click and SEO scores.</p>
           </div>
           <div className="card-body">
+            <FullFieldPresets value={headlineForm} onChange={(next) => { setHeadlineForm(next); setResult(null); }} presets={AI_TOOL_PRESETS.headline} disabled={loading} />
             <div className="form-grid-2">
               <div className="form-group">
                 <label>Original Headline *</label>
@@ -156,6 +147,7 @@ export default function AITools({ showToast }) {
             <p style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Generate unique story angles with hooks, sources, and impact scores.</p>
           </div>
           <div className="card-body">
+            <FullFieldPresets value={anglesForm} onChange={(next) => { setAnglesForm(next); setResult(null); }} presets={AI_TOOL_PRESETS.angles} disabled={loading} />
             <div className="form-group">
               <label>Topic *</label>
               <input value={anglesForm.topic} onChange={e => setAnglesForm({ ...anglesForm, topic: e.target.value })} placeholder="e.g., Rising inflation and grocery prices" />
@@ -219,6 +211,7 @@ export default function AITools({ showToast }) {
             <p style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Analyze article readability and get improvement suggestions.</p>
           </div>
           <div className="card-body">
+            <FullFieldPresets value={readabilityForm} onChange={(next) => { setReadabilityForm(next); setResult(null); }} presets={AI_TOOL_PRESETS.readability} disabled={loading} />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div className="form-group">
                 <label>Article Title</label>
@@ -295,6 +288,7 @@ export default function AITools({ showToast }) {
             <p style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Score any source for credibility, bias, and reliability.</p>
           </div>
           <div className="card-body">
+            <FullFieldPresets value={credibilityForm} onChange={(next) => { setCredibilityForm(next); setResult(null); }} presets={AI_TOOL_PRESETS.credibility} disabled={loading} />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div className="form-group">
                 <label>Source Name *</label>
@@ -360,6 +354,10 @@ export default function AITools({ showToast }) {
             )}
           </div>
         </div>
+      )}
+
+      {result && !result.parsed && (
+        <AIReport response={result} title={TOOLS.find((tool) => tool.id === activeTool)?.label || 'AI result'} />
       )}
     </div>
   );

@@ -1,3 +1,5 @@
+import AIWorkspaceModal from '../components/AIWorkspaceModal';
+import '../components/AIWorkspace.css';
 import React, { useState, useEffect } from 'react';
 import { storyLeads, ai } from '../services/api';
 import { extractData } from '../services/api';
@@ -96,7 +98,7 @@ export default function StoryLeads({ showToast }) {
         <button className="back-btn" onClick={() => { setSelected(null); setAiResult(null); setAiError(null); }}>
           &larr; Back to Story Leads
         </button>
-        <div className="detail-view">
+        <AIWorkspaceModal title="Record details" onClose={() => setSelected(null)}>
           <div className="detail-header">
             <div>
               <h3>{selected.title}</h3>
@@ -137,11 +139,11 @@ export default function StoryLeads({ showToast }) {
           {selected.ai_analysis && (
             <div className="detail-field">
               <div className="field-label">Previous AI Analysis</div>
-              <div className="field-value" style={{ whiteSpace: 'pre-wrap' }}>{selected.ai_analysis}</div>
+              <AIResponse result={{ result: selected.ai_analysis }} />
             </div>
           )}
           <AIResponse result={aiResult} loading={aiLoading} error={aiError} />
-        </div>
+        </AIWorkspaceModal>
       </div>
     );
   }

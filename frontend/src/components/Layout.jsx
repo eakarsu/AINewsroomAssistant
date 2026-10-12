@@ -1,3 +1,4 @@
+import AIReportLibrary from "./AIReportLibrary";
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 
@@ -50,7 +51,7 @@ export default function Layout({ user, onLogout, children }) {
           </div>
           <button className="btn btn-sm btn-secondary" onClick={onLogout}>Logout</button>
         </div>
-      </aside>
+      <AIReportLibrary /></aside>
       <main className="main-content">
         {children}
       </main>

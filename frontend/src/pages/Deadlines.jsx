@@ -1,3 +1,5 @@
+import AIWorkspaceModal from '../components/AIWorkspaceModal';
+import '../components/AIWorkspace.css';
 import React, { useState, useEffect } from 'react';
 import { deadlines, ai, extractData } from '../services/api';
 import Modal from '../components/Modal';
@@ -77,7 +79,7 @@ export default function Deadlines({ showToast }) {
     return (
       <div>
         <button className="back-btn" onClick={() => { setSelected(null); setAiResult(null); setAiError(null); }}>&larr; Back to Deadlines</button>
-        <div className="detail-view">
+        <AIWorkspaceModal title="Record details" onClose={() => setSelected(null)}>
           <div className="detail-header">
             <div>
               <h3>{selected.title}</h3>
@@ -114,7 +116,7 @@ export default function Deadlines({ showToast }) {
             <div className="field-label">Description</div>
             <div className="field-value">{selected.description || 'No description'}</div>
           </div>
-        </div>
+        </AIWorkspaceModal>
       </div>
     );
   }

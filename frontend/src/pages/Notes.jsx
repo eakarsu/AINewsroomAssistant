@@ -1,3 +1,5 @@
+import AIWorkspaceModal from '../components/AIWorkspaceModal';
+import '../components/AIWorkspace.css';
 import React, { useState, useEffect } from 'react';
 import { notes, extractData } from '../services/api';
 import Modal from '../components/Modal';
@@ -58,7 +60,7 @@ export default function Notes({ showToast }) {
     return (
       <div>
         <button className="back-btn" onClick={() => setSelected(null)}>&larr; Back to Notes</button>
-        <div className="detail-view">
+        <AIWorkspaceModal title="Record details" onClose={() => setSelected(null)}>
           <div className="detail-header">
             <div>
               <h3>{selected.pinned ? '\u{1F4CC} ' : ''}{selected.title}</h3>
@@ -95,7 +97,7 @@ export default function Notes({ showToast }) {
             <div className="field-label">Content</div>
             <div className="field-value" style={{ whiteSpace: 'pre-wrap' }}>{selected.content || 'No content'}</div>
           </div>
-        </div>
+        </AIWorkspaceModal>
       </div>
     );
   }

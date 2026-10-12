@@ -1,3 +1,5 @@
+import AIWorkspaceModal from '../components/AIWorkspaceModal';
+import '../components/AIWorkspace.css';
 import React, { useState, useEffect } from 'react';
 import { expenses, extractData } from '../services/api';
 import Modal from '../components/Modal';
@@ -52,7 +54,7 @@ export default function Expenses({ showToast }) {
     return (
       <div>
         <button className="back-btn" onClick={() => setSelected(null)}>&larr; Back to Expenses</button>
-        <div className="detail-view">
+        <AIWorkspaceModal title="Record details" onClose={() => setSelected(null)}>
           <div className="detail-header">
             <div>
               <h3>{selected.description}</h3>
@@ -92,7 +94,7 @@ export default function Expenses({ showToast }) {
               <div className="field-value">{new Date(selected.created_at).toLocaleString()}</div>
             </div>
           </div>
-        </div>
+        </AIWorkspaceModal>
       </div>
     );
   }

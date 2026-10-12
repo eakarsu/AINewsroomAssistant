@@ -86,7 +86,7 @@ Format your response with clear headers and bullet points.`;
     const result = await callOpenRouter(systemPrompt, userMessage);
 
     if (result.success && id) {
-      await db.query('UPDATE sources SET ai_analysis = $1 WHERE id = $2', [result.result, id]).catch(() => {});
+      await db.query('UPDATE sources SET ai_assessment = $1 WHERE id = $2', [result.result, id]).catch(() => {});
       await persistToAnalyses('verify-source', id, result.result);
     } else if (result.success) {
       await persistToAnalyses('verify-source', null, result.result);

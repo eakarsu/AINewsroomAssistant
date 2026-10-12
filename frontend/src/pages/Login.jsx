@@ -1,22 +1,24 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { auth } from '../services/api';
 
-const demoPassword = import.meta.env.VITE_ENABLE_DEMO_CREDENTIAL_AUTOFILL === 'true'
-  ? import.meta.env.VITE_DEMO_PASSWORD || ''
-  : '';
+const demoEnabled = import.meta.env.VITE_ENABLE_DEMO_CREDENTIAL_AUTOFILL === 'true';
+const demoEmail = demoEnabled ? import.meta.env.VITE_DEMO_EMAIL || 'editor@newsroom.com' : '';
+const demoPassword = demoEnabled ? import.meta.env.VITE_DEMO_PASSWORD || '' : '';
 
 export default function Login({ onLogin }) {
+  const demoLoginLock = useRef(false);
+  const [demoLoginBusy, setDemoLoginBusy] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e, demoLoginCredentials) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      const data = await auth.login(email, password);
+      const data = await auth.login(demoLoginCredentials?.email ?? email, demoLoginCredentials?.password ?? password);
       onLogin(data.user, data.token);
     } catch (err) {
       setError(err.message);
@@ -27,12 +29,13 @@ export default function Login({ onLogin }) {
 
   const quickLogin = (role) => {
     const creds = {
-      editor: { email: 'editor@newsroom.com', password: demoPassword },
+      editor: { email: demoEmail, password: demoPassword },
       reporter: { email: 'reporter@newsroom.com', password: demoPassword },
       admin: { email: 'admin@newsroom.com', password: demoPassword },
     };
     setEmail(creds[role].email);
     setPassword(creds[role].password);
+    return creds[role];
   };
 
   return (
@@ -73,9 +76,25 @@ export default function Login({ onLogin }) {
         <div className="quick-login">
           <p>Quick Login</p>
           <div className="quick-login-btns">
-            <button disabled={!demoPassword} onClick={() => quickLogin('editor')}>Auto Fill Demo Credentials</button>
-            <button disabled={!demoPassword} onClick={() => quickLogin('reporter')}>Reporter</button>
-            <button disabled={!demoPassword} onClick={() => quickLogin('admin')}>Admin</button>
+            <button
+              type="button"
+              disabled={!demoEmail || !demoPassword || loading || demoLoginBusy}
+              onClick={async (event) => {
+                if (!demoPassword || demoLoginLock.current) return;
+                demoLoginLock.current = true;
+                setDemoLoginBusy(true);
+                try {
+                  await handleSubmit(event, quickLogin('editor'));
+                } finally {
+                  demoLoginLock.current = false;
+                  setDemoLoginBusy(false);
+                }
+              }}
+            >
+              {demoLoginBusy ? 'Logging in…' : 'Log In as Demo'}
+            </button>
+            <button type="button" disabled={!demoPassword || loading || demoLoginBusy} onClick={() => quickLogin('reporter')}>Reporter</button>
+            <button type="button" disabled={!demoPassword || loading || demoLoginBusy} onClick={() => quickLogin('admin')}>Admin</button>
           </div>
         </div>
       </div>

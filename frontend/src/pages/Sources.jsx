@@ -1,3 +1,5 @@
+import AIWorkspaceModal from '../components/AIWorkspaceModal';
+import '../components/AIWorkspace.css';
 import React, { useState, useEffect } from 'react';
 import { sources, ai, extractData } from '../services/api';
 import Modal from '../components/Modal';
@@ -71,7 +73,7 @@ export default function Sources({ showToast }) {
     return (
       <div>
         <button className="back-btn" onClick={() => { setSelected(null); setAiResult(null); setAiError(null); }}>&larr; Back to Sources</button>
-        <div className="detail-view">
+        <AIWorkspaceModal title="Record details" onClose={() => setSelected(null)}>
           <div className="detail-header">
             <div>
               <h3>{selected.name}</h3>
@@ -109,8 +111,14 @@ export default function Sources({ showToast }) {
             <div className="field-label">Notes</div>
             <div className="field-value">{selected.notes || 'No notes'}</div>
           </div>
+          {selected.ai_assessment && (
+            <div className="detail-field" style={{ marginTop: 16 }}>
+              <div className="field-label">Saved AI Assessment</div>
+              <AIResponse result={{ result: selected.ai_assessment }} />
+            </div>
+          )}
           <AIResponse result={aiResult} loading={aiLoading} error={aiError} />
-        </div>
+        </AIWorkspaceModal>
       </div>
     );
   }
